@@ -33,8 +33,6 @@ namespace WebAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllWithPaging(int page = 1, int pageSize = 10, string searchValue = "")
         {
-           
-
             /*if (data.Count == 0)
             {
                 var result = ApiResponse<PaginatedList<DepartmentDto>>.CreateNotFound($"Departments not available");
@@ -60,34 +58,16 @@ namespace WebAPI.Controllers
             {
                 return HandleException<List<DepartmentDto>>(ex);
             }
-           /* var data = await mediator.Send(new GetAllDepartmentsWithPagingQuery { page = page, pageSize = pageSize, searchValue = searchValue });
-            var response1 = ApiResponse<PaginatedList<DepartmentDto>>.CreateSuccess(data);
-            var response = new
-            {
-                departments = response1.Data,
-                totalCount = data.TotalCount,
-                currentPage = data.CurrentPage,
-                totalPages = data.TotalPages,
-                pageSize = data.PageSize,
-                hasPrevious = data.HasPrevious,
-                hasNext = data.HasNext
-            };
-            return Ok(new { result = response, success = response1.Success, error = response1.Error });*/
         }
 
+        /// <summary>
+        /// Get All Department
+        /// </summary>
+        /// <returns></returns>
         // GET: api/<DepartmentController>
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            /* var data = await mediator.Send(new GetDepartmentListQuery());
-             if (data.Count == 0)
-             {
-                 var result = ApiResponse<DepartmentDto>.CreateNotFound($"Department not available");
-                 return NotFound(new { result = result.Data, success = result.Success, error = result.Error });
-             }
-             var response = ApiResponse<List<DepartmentDto>>.CreateSuccess(data);
-
-             return Ok(new { result = new { departments = response.Data }, success = response.Success, error = response.Error });*/
             try
             {
                 var data = await mediator.Send(new GetDepartmentListQuery());
@@ -98,7 +78,11 @@ namespace WebAPI.Controllers
                 return HandleException<DepartmentDto>(ex);
             }
         }
-
+        /// <summary>
+        /// Get Department By Id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         // GET api/<DepartmentController>/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetbyId(int id)
@@ -114,14 +98,16 @@ namespace WebAPI.Controllers
                 return HandleException<DepartmentDto>(ex);
             }
         }
-
+        /// <summary>
+        /// Create Department
+        /// </summary>
+        /// <param name="departmentDto"></param>
+        /// <returns></returns>
 
         // POST api/<DepartmentController>
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] CreateDepartmentDto departmentDto)
         {
-            /* var data = await mediator.Send(new CreateDepartmentCommand { departmentDto = departmentDto });
-             return Ok(data);*/
             try
             {
                 var data = await mediator.Send(new CreateDepartmentCommand { departmentDto = departmentDto });
@@ -135,6 +121,11 @@ namespace WebAPI.Controllers
             }
         }
 
+        /// <summary>
+        /// Update Department
+        /// </summary>
+        /// <param name="departmentDto"></param>
+        /// <returns></returns>
         // PUT api/<DepartmentController>/5
         [HttpPut()]
         public async Task<IActionResult> Put([FromBody] CreateDepartmentDto departmentDto)
@@ -149,7 +140,11 @@ namespace WebAPI.Controllers
                 return HandleException<DepartmentDto>(ex);
             }
         }
-
+        /// <summary>
+        /// Delete Department
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         // DELETE api/<DepartmentController>/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
@@ -165,9 +160,6 @@ namespace WebAPI.Controllers
                 var response = ApiResponse<Task>.CreateError(ex.Message);
                 return StatusCode(StatusCodes.Status500InternalServerError, new { result = response.Data, success = response.Success, error = response.Error });
             }
-
-            /*var data = await mediator.Send(new DeleteDepartmentCommand { Id = id });
-            return Ok(data);*/
         }
        
     }

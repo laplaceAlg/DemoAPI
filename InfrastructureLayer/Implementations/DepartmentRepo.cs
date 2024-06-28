@@ -104,23 +104,6 @@ namespace InfrastructureLayer.Implementations
             }
 
             return cachedPagedDepartments;
-            /*IQueryable<Department> query = _dbContext.Departments.
-                 Include(e => e.Dept_Emps)
-                 .ThenInclude(e => e.Employee)
-                 .AsQueryable();
-
-            if (!string.IsNullOrEmpty(searchValue))
-                query = query.Where(e => e.Name.Contains(searchValue));
-            var result = await PaginatedList<Department>.ToPagedList(query, page, pageSize);
-
-            var departmentDtos = result.Select(e => new DepartmentDto
-            {
-                Id = e.Id,
-                Name = e.Name,
-                Employees = e.Dept_Emps.Select(de => de.Employee.Name).ToList()
-            }).ToList();
-
-            return new PaginatedList<DepartmentDto>(departmentDtos, result.TotalCount, page, pageSize);*/
         }
              
         public async Task<DepartmentDto> GetByIdAsync(int id)
@@ -179,9 +162,5 @@ namespace InfrastructureLayer.Implementations
                 _cache.Remove("PagingCacheKeys");
             }
         }
-
-
-
-
     }
 }
