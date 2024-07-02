@@ -1,11 +1,9 @@
-﻿using ApplicationLayer.Commands;
-using ApplicationLayer.Commands.DepartmentCommand;
+﻿using ApplicationLayer.Commands.DepartmentCommand;
 using ApplicationLayer.Commons;
 using ApplicationLayer.Dtos.Departments;
 using ApplicationLayer.Queries.DepartmentQuery;
 using Asp.Versioning;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers
@@ -75,7 +73,7 @@ namespace WebAPI.Controllers
             }
             catch (AppException ex)
             {
-                return HandleException<DepartmentDto>(ex);
+                return HandleException<List<DepartmentDto>>(ex);
             }
         }
         /// <summary>
@@ -108,16 +106,26 @@ namespace WebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] CreateDepartmentDto departmentDto)
         {
+            /* try
+             {
+                 var data = await mediator.Send(new CreateDepartmentCommand { departmentDto = departmentDto });
+                 var response = ApiResponse<DepartmentDto>.CreateSuccess(data);
+                 return Ok(new { result = new { department = response.Data }, success = response.Success, error = response.Error });
+             }
+             catch (Exception ex)
+             {
+                 var response1 = ApiResponse<DepartmentDto>.CreateError(ex.Message);
+                 return StatusCode(StatusCodes.Status500InternalServerError, new { result = response1.Data, success = response1.Success, error = response1.Error });
+             }*/
             try
             {
+
                 var data = await mediator.Send(new CreateDepartmentCommand { departmentDto = departmentDto });
-                var response = ApiResponse<DepartmentDto>.CreateSuccess(data);
-                return Ok(new { result = new { department = response.Data }, success = response.Success, error = response.Error });
+                return OkResult(data, "department");
             }
-            catch (Exception ex)
+            catch (AppException ex)
             {
-                var response1 = ApiResponse<DepartmentDto>.CreateError(ex.Message);
-                return StatusCode(StatusCodes.Status500InternalServerError, new { result = response1.Data, success = response1.Success, error = response1.Error });
+                return HandleException<DepartmentDto>(ex);
             }
         }
 
@@ -149,7 +157,7 @@ namespace WebAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            try
+            /*try
             {
                 await mediator.Send(new DeleteDepartmentCommand { Id = id });
                 var response = ApiResponse<Task>.CreateSuccess(null);
@@ -159,6 +167,16 @@ namespace WebAPI.Controllers
             {
                 var response = ApiResponse<Task>.CreateError(ex.Message);
                 return StatusCode(StatusCodes.Status500InternalServerError, new { result = response.Data, success = response.Success, error = response.Error });
+            }*/
+            try
+            {
+                await mediator.Send(new DeleteDepartmentCommand { Id = id });
+                return OkResult<object>(null, null);
+                /*return OkResultPaging(new { message = "Employee deleted successfully." });*/
+            }
+            catch (AppException ex)
+            {
+                return HandleException<Task>(ex);
             }
         }
        

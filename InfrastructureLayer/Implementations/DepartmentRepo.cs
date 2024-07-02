@@ -27,7 +27,7 @@ namespace InfrastructureLayer.Implementations
         {
             var check = await _dbContext.Departments.FirstOrDefaultAsync(x => x.Name.ToLower() == departmentDto.Name.ToLower());
             if (check != null)
-                throw new Exception("Department already exist");
+                throw new AppException(400,"Department already exist");
             /*return new ServiceResponse(true, "Department already exist");*/
             var department = new Department
             {
@@ -48,7 +48,7 @@ namespace InfrastructureLayer.Implementations
         {
             var department = await _dbContext.Departments.FindAsync(id);
             if (department == null)
-                throw new Exception($"Department not found with id {id}");
+                throw new AppException(404,$"Department not found with id {id}");
                /* return new ServiceResponse(false, $"Department not found with id {id}");*/
             _dbContext.Departments.Remove(department);
             await SaveChangesAsync();

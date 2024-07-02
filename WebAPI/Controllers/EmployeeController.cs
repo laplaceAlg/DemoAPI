@@ -1,16 +1,18 @@
-﻿using ApplicationLayer.Commands;
-using ApplicationLayer.Commands.EmployeeCommand;
+﻿using ApplicationLayer.Commands.EmployeeCommand;
 using ApplicationLayer.Commons;
+using ApplicationLayer.Dtos.Departments;
 using ApplicationLayer.Dtos.Employees;
 using ApplicationLayer.Queries.EmployeeQuery;
+using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers
 {
-    [Route("api/v1/[controller]/[action]")]
     [ApiController]
-    public class EmployeeController : ControllerBase
+    [Route("api/v{v:apiVersion}/[controller]/[action]")]
+    [ApiVersion("1.0")]
+    public class EmployeeController : BaseController
     {
         private readonly IMediator mediator;
 
@@ -21,28 +23,39 @@ namespace WebAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllWithPaging(int page = 1, int pageSize = 10, string searchValue = "")
         {
-            var data = await mediator.Send(new GetAllEmployeesWithPagingQuery { page = page, pageSize = pageSize, searchValue = searchValue});
-
-            //if (data.Count == 0)
-            //{
-            //    var result = ApiResponse<PaginatedList<EmployeeDto>>.CreateNotFound($"Employee not available");
-            //    return NotFound(new { result = result.Data, success = result.Success, error = result.Error });
-            //    /*return NotFound(ApiResponse<List<Employee>>.CreateNotFound("Employee not available"));*/
-            //}
-
-            /*return Ok(response);*/
-            var response1 = ApiResponse<PaginatedList<EmployeeDto>>.CreateSuccess(data);
-            var response = new
+            /* var data = await mediator.Send(new GetAllEmployeesWithPagingQuery { page = page, pageSize = pageSize, searchValue = searchValue});
+             var response1 = ApiResponse<PaginatedList<EmployeeDto>>.CreateSuccess(data);
+             var response = new
+             {
+                 employees = response1.Data,
+                 totalCount = data.TotalCount,
+                 currentPage = data.CurrentPage,
+                 totalPages = data.TotalPages,
+                 pageSize = data.PageSize,
+                 hasPrevious = data.HasPrevious,
+                 hasNext = data.HasNext
+             };
+             return Ok(new { result =  response, success = response1.Success, error = response1.Error } );*/
+            try
             {
-                employees = response1.Data,
-                totalCount = data.TotalCount,
-                currentPage = data.CurrentPage,
-                totalPages = data.TotalPages,
-                pageSize = data.PageSize,
-                hasPrevious = data.HasPrevious,
-                hasNext = data.HasNext
-            };
-            return Ok(new { result =  response, success = response1.Success, error = response1.Error } );
+                var data = await mediator.Send(new GetAllEmployeesWithPagingQuery { page = page, pageSize = pageSize, searchValue = searchValue });
+
+                var response = new
+                {
+                    employees = data,
+                    totalCount = data.TotalCount,
+                    currentPage = data.CurrentPage,
+                    totalPages = data.TotalPages,
+                    pageSize = data.PageSize,
+                    hasPrevious = data.HasPrevious,
+                    hasNext = data.HasNext
+                };
+                return OkResultPaging(response);
+            }
+            catch (AppException ex)
+            {
+                return HandleException<List<DepartmentDto>>(ex);
+            }
         }
 
 
@@ -51,44 +64,45 @@ namespace WebAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var data = await mediator.Send(new GetEmployeeListQuery());
-            /*  if (data.Count() == 0)
-              {
-                  return NotFound("Employee not available");
-              }
-              return Ok(data);*/
-            if (data.Count == 0)
+            try
             {
-                var result = ApiResponse<EmployeeDto>.CreateNotFound($"Employee not available");
-                return NotFound(new { result = result.Data, success = result.Success, error = result.Error });
+                var data = await mediator.Send(new GetEmployeeListQuery());
+                return OkResult(data, "employees");
             }
-            var response = ApiResponse<List<EmployeeDto>>.CreateSuccess(data);
-
-            return Ok(new { result = new { employees = response.Data }, success = response.Success, error = response.Error  });
+            catch (AppException ex)
+            {
+                return HandleException<List<EmployeeDto>>(ex);
+            }
         }
 
         // GET api/<EmployeeController>/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetbyId(int id)
         {
-            var data = await mediator.Send(new GetEmployeeByIdQuery { Id = id });
-       /*     if (data == null)
-                return NotFound($"Employee not found with id {id}");
-            return Ok(data);*/
+            try
+            {
+                var data= await mediator.Send(new GetEmployeeByIdQuery { Id = id });
+                return OkResult(data, "employee");
+            }
+            catch (AppException ex)
+            {
+                return HandleException<EmployeeDto>(ex);
+            }
+          /*  var data = await mediator.Send(new GetEmployeeByIdQuery { Id = id });
             if(data == null)
             {
                 var response1 = ApiResponse<EmployeeDto>.CreateNotFound($"Employee not found with id {id}");
                 return NotFound( new { result = response1.Data , success = response1.Success, error = response1.Error} );
             }
             var response = ApiResponse<EmployeeDto>.CreateSuccess(data);
-            return Ok(new { result = new { employee = response.Data }, success =response.Success, error = response.Error} );
+            return Ok(new { result = new { employee = response.Data }, success =response.Success, error = response.Error} );*/
         }
 
         // POST api/<EmployeeController>
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] CreateEmployeeDto createEmployeeDto)
         {
-            try
+           /* try
             {
                 var data = await mediator.Send(new CreateEmployeeCommand { createEmployeeDto = createEmployeeDto });
                 var response = ApiResponse<EmployeeDto>.CreateSuccess(data);
@@ -98,6 +112,15 @@ namespace WebAPI.Controllers
             {
                 var response = ApiResponse<EmployeeDto>.CreateError(ex.Message);
                 return StatusCode(StatusCodes.Status500InternalServerError, new { result = response.Data, success = response.Success, error = response.Error });
+            }*/
+            try
+            {
+                var data = await mediator.Send(new CreateEmployeeCommand { createEmployeeDto = createEmployeeDto });
+                return OkResult(data, "employee");
+            }
+            catch (AppException ex)
+            {
+                return HandleException<EmployeeDto>(ex);
             }
         }
 
@@ -105,9 +128,16 @@ namespace WebAPI.Controllers
         [HttpPut()]
         public async Task<IActionResult> Put([FromBody] CreateEmployeeDto createEmployeeDto)
         {
-            /*var data = await mediator.Send(new UpdateEmployeeCommand { createEmployeeDto = createEmployeeDto });
-            return Ok(data);*/
             try
+            {
+                var data = await mediator.Send(new UpdateEmployeeCommand { createEmployeeDto = createEmployeeDto });
+                return OkResult(data, "employee");
+            }
+            catch (AppException ex)
+            {
+                return HandleException<EmployeeDto>(ex);
+            }
+            /*try
             {
                 var data = await mediator.Send(new UpdateEmployeeCommand { createEmployeeDto = createEmployeeDto });
                 var response = ApiResponse<EmployeeDto>.CreateSuccess(data);
@@ -117,7 +147,7 @@ namespace WebAPI.Controllers
             {
                 var response = ApiResponse<EmployeeDto>.CreateError(ex.Message);
                 return StatusCode(StatusCodes.Status500InternalServerError, new { result = response.Data, success = response.Success, error = response.Error });
-            }
+            }*/
         }
 
         // DELETE api/<EmployeeController>/5
@@ -127,16 +157,13 @@ namespace WebAPI.Controllers
             try
             {
                 await mediator.Send(new DeleteEmployeeCommand { Id = id });
-                var response = ApiResponse<Task>.CreateSuccess(null);
-                return Ok(new { result = response.Data, success = response.Success, error = response.Error });
+                return OkResult<object>(null, null);
+                /*return OkResultPaging(new { message = "Employee deleted successfully." });*/
             }
-            catch (Exception ex)
+            catch (AppException ex)
             {
-                var response = ApiResponse<Task>.CreateError(ex.Message);
-                return StatusCode(StatusCodes.Status500InternalServerError, new { result = response.Data, success = response.Success, error = response.Error });
+                return HandleException<Task>(ex);
             }
-       
-            /*return Ok(data);*/
         }
     }
 }

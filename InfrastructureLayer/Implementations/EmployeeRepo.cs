@@ -82,7 +82,7 @@ namespace InfrastructureLayer.Implementations
         {
             var employee = await _dbContext.Employees.FindAsync(id);
             if (employee == null)
-                throw new Exception($"Employee not found with id {id}");
+                throw new AppException(404,$"Employee not found with id {id}");
                /* return new ServiceResponse(false, $"Employee not found with id {id}");*/
             _dbContext.Employees.Remove(employee);
             await SaveChangesAsync();
@@ -91,6 +91,8 @@ namespace InfrastructureLayer.Implementations
 
         public async Task<PaginatedList<EmployeeDto>> GetAllEmployeesWithPaging(int page, int pageSize, string searchValue)
         {
+            if (page <= 0 || pageSize <= 0)
+                throw new AppException(0, "Page and PageSize must be greater than zero.");
             IQueryable<Employee> query = _dbContext.Employees.
                 Include(e => e.Dept_Emps)
                 .ThenInclude(e => e.Department)
@@ -142,7 +144,8 @@ namespace InfrastructureLayer.Implementations
                 .FirstOrDefaultAsync(e => e.Id == id);
 
             var employeeDto = _mapper.Map<EmployeeDto>(employee);
-
+            if (employeeDto == null)
+                throw new AppException(404, $"Employee not found with id {id}");
             return employeeDto;
         }
 
@@ -153,7 +156,7 @@ namespace InfrastructureLayer.Implementations
                                         .ThenInclude(d => d.Department)
                                         .FirstOrDefaultAsync(e => e.Id == createEmployeeDto.Id);
             if (employeeUpdate == null)
-                throw new Exception($"Employee with Id {createEmployeeDto.Id} not found");
+                throw new AppException(404,$"Employee with Id {createEmployeeDto.Id} not found");
             /* return new ServiceResponse(false, "Employee not found");*/
             employeeUpdate.Name = createEmployeeDto.Name;
             employeeUpdate.Address = createEmployeeDto.Address;
@@ -165,7 +168,7 @@ namespace InfrastructureLayer.Implementations
                 {
                     var department = await _dbContext.Departments.FirstOrDefaultAsync(d => d.Id == departmentId);
                     if (department == null)
-                        throw new Exception($"Department with ID {departmentId} not found");
+                        throw new AppException(400,$"Department with ID {departmentId} not found");
                     /* return new ServiceResponse(false, $"Department with ID {departmentId} not found");*/
 
                     var deptEmp = new Dept_Emp

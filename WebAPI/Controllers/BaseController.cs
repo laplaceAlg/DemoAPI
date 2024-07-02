@@ -46,11 +46,15 @@ namespace WebAPI.Controllers
         {
           
             var response = ApiResponse<T>.CreateSuccess(data);
-            var resultObject = new Dictionary<string, object>
+            object resultObject = null;
+
+            if (data != null && resultObjectName != null)
+            {
+                resultObject = new Dictionary<string, object>
                 {
                     { resultObjectName, response.Data }
                 };
-
+            }
 
             return Ok(new
             {
