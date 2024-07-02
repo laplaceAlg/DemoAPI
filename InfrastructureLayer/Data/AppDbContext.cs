@@ -12,6 +12,7 @@ namespace InfrastructureLayer.Data
         public DbSet<Employee> Employees { get; set; }
         public DbSet<Department> Departments { get; set; }
         public DbSet<Dept_Emp> Dept_Emps { get; set; }
+        public DbSet<User> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -28,6 +29,11 @@ namespace InfrastructureLayer.Data
                 .HasOne(de => de.Department)
                 .WithMany(d => d.Dept_Emps)
                 .HasForeignKey(de => de.DepartmentId);
+
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasIndex(e => e.UserName).IsUnique();
+            });
         }
        
     }

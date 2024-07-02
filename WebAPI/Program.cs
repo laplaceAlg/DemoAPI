@@ -1,11 +1,16 @@
+using ApplicationLayer.Commons;
 using ApplicationLayer.Contracts;
 using ApplicationLayer.Handlers.EmployeeHandler;
 using Asp.Versioning;
 using InfrastructureLayer.Data;
 using InfrastructureLayer.Helper;
 using InfrastructureLayer.Implementations;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +32,29 @@ builder.Services.AddSwaggerGen(options =>
         Version = "v2",
         Title = "API v2",
     });
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Please enter a valid token",
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        BearerFormat = "JWT",
+        Scheme = "Bearer"
+    });
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type=ReferenceType.SecurityScheme,
+                    Id="Bearer"
+                }
+            },
+            new string[]{}
+        }
+    });
     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = System.IO.Path.Combine(AppContext.BaseDirectory, xmlFile);
     options.IncludeXmlComments(xmlPath);
@@ -43,6 +71,31 @@ builder.Services.AddApiVersioning(opt =>
          options.GroupNameFormat = "'v'VVV";
          options.SubstituteApiVersionInUrl = true;
      }); ;
+/*var jwtSettings = builder.Configuration.GetSection("AppSettings").Get<JwtSetting>();
+builder.Services.AddSingleton(jwtSettings);*/
+builder.Services.Configure<JwtSetting>(builder.Configuration.GetSection("AppSettings"));
+var secretKey = builder.Configuration["AppSettings:SecretKey"];
+var secretKeyBytes = Encoding.UTF8.GetBytes(secretKey);
+
+builder.Services.AddAuthentication(options => {
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+    // Adding Jwt Bearer
+    .AddJwtBearer(options => {
+        options.SaveToken = true;
+        options.RequireHttpsMetadata = false;
+        options.TokenValidationParameters = new TokenValidationParameters()
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(secretKeyBytes),
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
 
 var mySqlConnectionStr = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContextPool<AppDbContext>(options => options.UseMySql(mySqlConnectionStr, ServerVersion.AutoDetect(mySqlConnectionStr)));
@@ -53,6 +106,8 @@ builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 
 builder.Services.AddScoped<IEmployee, EmployeeRepo>();
 builder.Services.AddScoped<IDepartment, DepartmentRepo>();
+builder.Services.AddScoped<IUser, UserRepo>();
+
 
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(GetEmployeeListHandler).Assembly));
 
@@ -69,7 +124,7 @@ if (app.Environment.IsDevelopment())
         c.SwaggerEndpoint("/swagger/v2/swagger.json", "API v2");
     });
 }
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
